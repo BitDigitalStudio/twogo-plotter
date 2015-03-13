@@ -38,19 +38,20 @@ import java.text.ParseException;
 public class Client {
     static Log log = LogFactory.getLog(Client.class);
 
-    static final String SERVER = "http://localhost:8080/web/rpc/twogoadmin/";
-   HttpClient client;
+   private final String serverUrl;
+    HttpClient client;
     HttpState state;
 
     String X_CSRF_Token = null;
 
-    public Client() {
+    public Client(String serverUrl) {
+        this.serverUrl = serverUrl;
     }
 
     public JSONObject sendAndReceive(String endpoint, String method, Object[] args) throws Exception{
         JSONObject message = buildParam(method, args);
         if (log.isDebugEnabled()) log.debug("Sending: " + message.toString(2));
-        PostMethod postMethod = new PostMethod(new URI(SERVER+endpoint).toString());
+        PostMethod postMethod = new PostMethod(new URI(this.serverUrl+endpoint).toString());
         postMethod.setRequestHeader("Content-Type", "text/plain");
         postMethod.setRequestHeader("X-CSRF-Token", getToken());
 
@@ -78,9 +79,10 @@ public class Client {
         }
     }
 
-    private String getToken() throws Exception{
+    private String getToken() throws Exception
+    {
         JSONObject message = buildParam("echo", new String[]{"any"});
-        PostMethod postMethod = new PostMethod(new URI(SERVER+"Echo").toString());
+        PostMethod postMethod = new PostMethod(new URI(this.serverUrl+"Echo").toString());
         postMethod.setRequestHeader("Content-Type", "text/plain");
         postMethod.setRequestHeader("X-CSRF-Token", "Fetch");
 
@@ -98,6 +100,8 @@ public class Client {
             if (responseMessage == null) {
                 throw new ClientError("Invalid response type - " + rawResponseMessage.getClass());
             }
+
+            System.out.println(responseMessage);
             return (responseMessage.getJSONObject("result").getJSONObject("header").getString("value"));
 
         } catch (ParseException e) {
