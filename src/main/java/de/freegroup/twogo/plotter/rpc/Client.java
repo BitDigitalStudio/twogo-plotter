@@ -18,97 +18,103 @@
  */
 package de.freegroup.twogo.plotter.rpc;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpState;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.Consts;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.IOException;
-import java.net.URI;
-import java.text.ParseException;
-
 public class Client {
     static Log log = LogFactory.getLog(Client.class);
 
-   private final String serverUrl;
-    HttpClient client;
-    HttpState state;
+    private final String serverUrl;
 
-    String X_CSRF_Token = null;
+    HttpHost proxy;
 
     public Client(String serverUrl) {
+        proxy = new HttpHost("proxy", 8080, "http");
         this.serverUrl = serverUrl;
     }
 
-    public JSONObject sendAndReceive(String endpoint, String method, Object[] args) throws Exception{
-        JSONObject message = buildParam(method, args);
-        if (log.isDebugEnabled()) log.debug("Sending: " + message.toString(2));
-        PostMethod postMethod = new PostMethod(new URI(this.serverUrl+endpoint).toString());
-        postMethod.setRequestHeader("Content-Type", "text/plain");
-        postMethod.setRequestHeader("X-CSRF-Token", getToken());
+    public JSONObject sendAndReceive(String endpoint, String method, Object[] args) throws Exception {
+        CloseableHttpClient httpclient = HttpClients.createDefault();
 
-        RequestEntity requestEntity = new StringRequestEntity(message.toString());
-        postMethod.setRequestEntity(requestEntity);
+        RequestConfig config = RequestConfig
+                .custom()
+                .setProxy(proxy)
+                .build();
+
+        HttpPost request = new HttpPost(this.serverUrl+endpoint);
+        request.setConfig(config);
+        request.setHeader("Content-Type", "application/json");
+        request.setHeader("X-CSRF-Token", getToken(httpclient));
+
+
+        JSONObject message = buildParam(method, args);
+        StringEntity body = new StringEntity( message.toString(), ContentType.create("application/json", Consts.UTF_8));
+
+        request.setEntity(body);
+
+        System.out.println(">> Request URI: " + request.getRequestLine().getUri());
         try {
-            http().executeMethod(null, postMethod);
-            int statusCode = postMethod.getStatusCode();
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new ClientError("HTTP Status - " + HttpStatus.getStatusText(statusCode) + " (" + statusCode + ")");
-            }
-            JSONTokener tokener = new JSONTokener(postMethod.getResponseBodyAsString());
+            CloseableHttpResponse response = httpclient.execute( request);
+
+            JSONTokener tokener = new JSONTokener(new BasicResponseHandler().handleResponse(response));
             Object rawResponseMessage = tokener.nextValue();
             JSONObject responseMessage = (JSONObject) rawResponseMessage;
             if (responseMessage == null) {
                 throw new ClientError("Invalid response type - " + rawResponseMessage.getClass());
             }
             return responseMessage;
-        } catch (ParseException e) {
-            throw new ClientError(e);
-        } catch (HttpException e) {
-            throw new ClientError(e);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ClientError(e);
         }
     }
 
-    private String getToken() throws Exception
-    {
-        JSONObject message = buildParam("echo", new String[]{"any"});
-        PostMethod postMethod = new PostMethod(new URI(this.serverUrl+"Echo").toString());
-        postMethod.setRequestHeader("Content-Type", "text/plain");
-        postMethod.setRequestHeader("X-CSRF-Token", "Fetch");
+    private String getToken(CloseableHttpClient httpclient) throws Exception {
 
-        RequestEntity requestEntity = new StringRequestEntity(message.toString());
-        postMethod.setRequestEntity(requestEntity);
+        RequestConfig config = RequestConfig.custom()
+                 .setProxy(proxy)
+                .build();
+        HttpPost request = new HttpPost(this.serverUrl+"Echo");
+        request.setConfig(config);
+        request.setHeader("Content-Type", "text/plain");
+        request.setHeader("X-CSRF-Token", "Fetch");
+
         try {
-            http().executeMethod(null, postMethod);
-            int statusCode = postMethod.getStatusCode();
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new ClientError("HTTP Status - " + HttpStatus.getStatusText(statusCode) + " (" + statusCode + ")");
-            }
-            JSONTokener tokener = new JSONTokener(postMethod.getResponseBodyAsString());
+
+            JSONObject message = buildParam("echo", new String[]{"any"});
+
+            StringEntity body = new StringEntity(
+                    message.toString(),
+                    ContentType.create("application/json", Consts.UTF_8));
+
+            request.setEntity(body);
+            System.out.println(">> Request URI: " + request.getRequestLine().getUri());
+
+            CloseableHttpResponse response = httpclient.execute( request);
+
+            JSONTokener tokener = new JSONTokener(new BasicResponseHandler().handleResponse(response));
             Object rawResponseMessage = tokener.nextValue();
             JSONObject responseMessage = (JSONObject) rawResponseMessage;
             if (responseMessage == null) {
                 throw new ClientError("Invalid response type - " + rawResponseMessage.getClass());
             }
 
-            System.out.println(responseMessage);
             return (responseMessage.getJSONObject("result").getJSONObject("header").getString("value"));
 
-        } catch (ParseException e) {
-            throw new ClientError(e);
-        } catch (HttpException e) {
-            throw new ClientError(e);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ClientError(e);
         }
     }
@@ -132,24 +138,6 @@ public class Client {
         }
 
         return object;
-    }
-
-    /**
-     * An option to set state from the outside.
-     * for example, to provide existing session parameters.
-     */
-    public void setState(HttpState state) {
-        this.state = state;
-    }
-
-    HttpClient http() {
-        if (client == null) {
-            client = new HttpClient();
-            if (state == null)
-                state = new HttpState();
-            client.setState(state);
-        }
-        return client;
     }
 
 }

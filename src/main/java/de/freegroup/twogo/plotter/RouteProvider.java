@@ -18,6 +18,7 @@ public class RouteProvider {
     /** Earth diameter in [m]. **/
     public static final double EARTH_DIAMETER_M            = 2 * EARTH_RADIUS_M;
 
+
     public static void main(String[] args) throws Exception {
 
         getRandomRoute();
@@ -27,8 +28,8 @@ public class RouteProvider {
     public static ArrayList<GeoLocation> getRandomRoute() throws Exception {
 
         ArrayList<GeoLocation> waypoints = new ArrayList<GeoLocation>();
-        Client client = new Client("http://dev-twogo.mo.sap.corp:7070/web/rpc/");
-        JSONObject response = client.sendAndReceive("Route","getRandomRoute", new Object[]{"2012-12-31T23:59:59+02:00","2016-12-31T23:59:59+02:00" ,
+        Client client = new Client("https://www.twogo.com/web/rpc/");
+        JSONObject response = client.sendAndReceive("Route","getRandomRoute", new Object[]{"2014-12-31T23:59:59+02:00","2015-12-31T23:59:59+02:00" ,
                 44.499072, 6.413287,
                 50.524542, 10.263994});
         JSONArray result = response.getJSONArray("result");
