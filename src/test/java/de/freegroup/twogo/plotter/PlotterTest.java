@@ -2,8 +2,6 @@ package de.freegroup.twogo.plotter;
 
 import junit.framework.TestCase;
 
-import java.awt.*;
-
 public class PlotterTest extends TestCase {
 
     final int WIDTH = 300;

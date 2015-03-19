@@ -43,7 +43,7 @@ public class Client {
     HttpHost proxy;
 
     public Client(String serverUrl) {
-        proxy = new HttpHost("proxy", 8080, "http");
+   //     proxy = new HttpHost("proxy", 8080, "http");
         this.serverUrl = serverUrl;
     }
 
@@ -52,7 +52,7 @@ public class Client {
 
         RequestConfig config = RequestConfig
                 .custom()
-                .setProxy(proxy)
+   //            .setProxy(proxy)
                 .build();
 
         HttpPost request = new HttpPost(this.serverUrl+endpoint);
@@ -139,5 +139,4 @@ public class Client {
 
         return object;
     }
-
 }

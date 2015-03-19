@@ -17,7 +17,7 @@ public class PNGPlotterTest extends TestCase {
         PNGPlotter plotter = new PNGPlotter(BOTTOM_LEFT_LAT, BOTTOM_LEFT_LON, TOP_RIGHT_LAT, TOP_RIGHT_LON, WIDTH,HEIGHT);
 
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             AbstractList<GeoLocation> route = RouteProvider.getRandomRoute();
             if(route.size()>1) {
                 System.out.println("Route with "+route.size()+" waypoints.");
