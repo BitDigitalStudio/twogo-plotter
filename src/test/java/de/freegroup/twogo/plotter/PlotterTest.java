@@ -12,7 +12,7 @@ public class PlotterTest extends TestCase {
     final double TOP_RIGHT_LON   = 10.263994;
 
     public void testMap() throws Exception {
-        Plotter plotter = new Plotter(BOTTOM_LEFT_LAT, BOTTOM_LEFT_LON, TOP_RIGHT_LAT, TOP_RIGHT_LON, WIDTH,HEIGHT);
+        Plotter plotter = new PNGPlotter(BOTTOM_LEFT_LAT, BOTTOM_LEFT_LON, TOP_RIGHT_LAT, TOP_RIGHT_LON, WIDTH,HEIGHT);
 
         double lat = BOTTOM_LEFT_LAT;
         double lon = BOTTOM_LEFT_LON;

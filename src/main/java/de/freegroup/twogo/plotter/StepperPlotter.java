@@ -5,15 +5,22 @@ import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Enumeration;
 
 
-public class Main implements SerialPortEventListener {
+public class StepperPlotter extends Plotter implements SerialPortEventListener {
     SerialPort serialPort;
     private final Object responseSync = new Object();
+
+    private final int ANGLE = 90;
+    private final int SPEED = 100;
+
+    double currentLatitude;
+    double currentLongitude;
 
     /** The port we're normally going to use. */
     private static final String PORT_NAMES[] = {
@@ -22,6 +29,7 @@ public class Main implements SerialPortEventListener {
             "/dev/ttyUSB0", // Linux
             "COM3", // Windows
     };
+
     /**
      * A BufferedReader which will be fed by a InputStreamReader
      * converting the bytes into characters
@@ -35,10 +43,8 @@ public class Main implements SerialPortEventListener {
     /** Default bits per second for COM port. */
     private static final int DATA_RATE = 9600;
 
-    public void initialize() {
-        // the next line is for Raspberry Pi and
-        // gets us into the while loop and was suggested here was suggested http://www.raspberrypi.org/phpBB3/viewtopic.php?f=81&t=32186
-//        System.setProperty("gnu.io.rxtx.SerialPorts", "/dev/tty.usbserial-A9005evA");
+    public StepperPlotter(double blLatitude, double blLongitude, double trLatitude, double trLongitude, int width, int height) {
+        super(blLatitude, blLongitude, trLatitude, trLongitude, width, height);
 
         CommPortIdentifier portId = null;
         Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
@@ -81,7 +87,29 @@ public class Main implements SerialPortEventListener {
         }
     }
 
-    public void send(String send) {
+    @Override
+    public void moveTo(double latitude, double longitude) {
+        this.currentLatitude = latitude;
+        this.currentLongitude = longitude;
+
+        Point end   = this.map(latitude, latitude);
+        send("G01 X"+end.x+" Y"+end.y+" Z0 F500");
+    }
+
+    @Override
+    public void lineTo( double latitude, double longitude) throws Exception
+    {
+        Point start = this.map(this.currentLatitude, this.currentLongitude);
+        Point end   = this.map(latitude, longitude);
+
+        send("G01 X"+start.x+" Y"+start.y+" Z"+ANGLE+" F"+SPEED);
+        send("G01 X"+end.x+" Y"+end.y+" Z"+ANGLE+" F"+SPEED);
+
+        this.currentLatitude  = latitude;
+        this.currentLongitude = longitude;
+    }
+
+    private void send(String send) {
         System.out.println("sending:"+send);
         synchronized (responseSync) {
             try {
@@ -129,16 +157,4 @@ public class Main implements SerialPortEventListener {
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
 
-    public static void main(String[] args) throws Exception {
-        Main main = new Main();
-        main.initialize();
-
-        main.send("");
-        while(true) {
-            main.send("G01 X700 Y0 F5");
-            main.send("G01 X700 Y700 F5");
-            main.send("G01 X0 Y700 F5");
-            main.send("G01 X0 Y0 F5");
-        }
-    }
-}
+ }

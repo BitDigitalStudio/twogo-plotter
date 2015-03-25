@@ -5,7 +5,7 @@ import java.awt.*;
 /**
  * Created by d023280 on 13.03.15.
  */
-public class Plotter {
+public abstract class Plotter {
 
     final int width;
     final int height;
@@ -22,6 +22,18 @@ public class Plotter {
         this.blLongitude= blLongitude;
         this.trLatitude = trLatitude;
         this.trLongitude= trLongitude;
+    }
+
+    public abstract void moveTo(double latitude, double longitude);
+
+    public abstract void lineTo( double endLatitude, double endLongitude) throws Exception;
+
+    public final void lineTo( GeoLocation end) throws Exception {
+        lineTo(end.latitude, end.longitude);
+    }
+
+    public final void moveTo( GeoLocation end) throws Exception {
+        moveTo( end.latitude, end.longitude);
     }
 
 
@@ -45,7 +57,7 @@ public class Plotter {
         int y = (int)(height / (trLatitude  - blLatitude )* latitude);
         int x = (int)(width  / (trLongitude - blLongitude)* longitude);
 
-        return new Point(x,height-y);
+        return new Point(Math.min(this.width,Math.max(0,x)),Math.min(this.height,Math.max(0,height-y)));
     }
 
 }

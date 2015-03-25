@@ -4,8 +4,8 @@ import junit.framework.TestCase;
 
 import java.util.AbstractList;
 
-public class PNGPlotterTest extends TestCase {
-    final int WIDTH = 800;
+public class StepperPlotterTest extends TestCase {
+    final int WIDTH = 640;
     final int HEIGHT = 850;
     final double BOTTOM_LEFT_LAT = 49.271984;
     final double BOTTOM_LEFT_LON = 8.458098;
@@ -14,7 +14,7 @@ public class PNGPlotterTest extends TestCase {
 
     public void testDump() throws Exception{
 
-        PNGPlotter plotter = new PNGPlotter(BOTTOM_LEFT_LAT, BOTTOM_LEFT_LON, TOP_RIGHT_LAT, TOP_RIGHT_LON, WIDTH,HEIGHT);
+        StepperPlotter plotter = new StepperPlotter(BOTTOM_LEFT_LAT, BOTTOM_LEFT_LON, TOP_RIGHT_LAT, TOP_RIGHT_LON, WIDTH,HEIGHT);
 
 
         for (int i = 0; i < 1000; i++) {
@@ -25,14 +25,10 @@ public class PNGPlotterTest extends TestCase {
                 plotter.moveTo(from);
                 for (int j = 1; j < route.size(); j++) {
                     GeoLocation to = route.get(j);
-                    plotter.lineTo( to);
+                    plotter.lineTo(to);
                 }
             }
-            String fileName = "test_"+i+".png";
-            System.out.println(fileName);
-            plotter.dump(fileName);
         }
-        plotter.dump("test.png");
     }
 }
 

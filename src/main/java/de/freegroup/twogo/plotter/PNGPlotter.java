@@ -14,6 +14,9 @@ public class PNGPlotter extends Plotter{
     Graphics2D graphics;
     BufferedImage image;
 
+    double currentLatitude;
+    double currentLongitude;
+
     public PNGPlotter(double blLatitude, double blLongitude, double trLatitude, double trLongitude, int width, int height) {
         super(blLatitude, blLongitude, trLatitude, trLongitude, width, height);
 
@@ -25,20 +28,26 @@ public class PNGPlotter extends Plotter{
         graphics.setColor(Color.black);
     }
 
-    void draw(GeoLocation start, GeoLocation end) throws Exception
-    {
-        draw(start.latitude, start.longitude, end.latitude, end.longitude);
+    @Override
+    public void moveTo(double latitude, double longitude){
+        this.currentLatitude  = latitude;
+        this.currentLongitude = longitude;
     }
 
-    void draw(double startLatitude, double startLongitude, double endLatitude, double endLongitude) throws Exception
-    {
-        Point start = this.map(startLatitude, startLongitude);
-        Point end   = this.map(endLatitude, endLongitude);
+
+    @Override
+    public void lineTo( double latitude, double longitude) throws Exception{
+
+        Point start = this.map(this.currentLatitude, this.currentLongitude);
+        Point end   = this.map(latitude, longitude);
 
         graphics.drawLine(start.x, start.y, end.x, end.y);
+
+        this.currentLatitude  = latitude;
+        this.currentLongitude = longitude;
     }
 
-    void dump(String filename) throws Exception{
+    public void dump(String filename) throws Exception{
 
         ImageIO.write(image, "PNG", new File(filename));
 
